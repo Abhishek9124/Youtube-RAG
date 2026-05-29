@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 640" font-family="-apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+    </marker>
+    <style>
+      .box { rx: 12; ry: 12; stroke-width: 2; }
+      .title { font-size: 15px; font-weight: 700; fill: #0f172a; }
+      .sub { font-size: 12px; fill: #475569; }
+      .arrow { stroke: #6b7280; stroke-width: 2; fill: none; }
+      .label { font-size: 11px; fill: #334155; font-weight: 600; }
+      .section { font-size: 13px; font-weight: 700; fill: #1e293b; letter-spacing: 1px; }
+    </style>
+  </defs>
+
+  <rect width="1180" height="640" fill="#fafafa"/>
+
+  <!-- Title -->
+  <text x="590" y="34" text-anchor="middle" font-size="20" font-weight="700" fill="#0f172a">ClipSage — Architecture</text>
+  <text x="590" y="56" text-anchor="middle" font-size="13" fill="#64748b">YouTube transcript → AI-generated content + RAG chatbot</text>
+
+  <!-- ============ INGESTION ROW ============ -->
+  <text x="60" y="100" class="section">1 · INGEST</text>
+
+  <!-- User -->
+  <rect x="40" y="120" width="160" height="70" class="box" fill="#eef2ff" stroke="#6366f1"/>
+  <text x="120" y="148" text-anchor="middle" class="title">User</text>
+  <text x="120" y="170" text-anchor="middle" class="sub">Pastes YouTube URL</text>
+  <text x="120" y="184" text-anchor="middle" class="sub">in Streamlit UI</text>
+
+  <!-- YouTube Transcript API -->
+  <rect x="250" y="120" width="190" height="70" class="box" fill="#fef2f2" stroke="#ef4444"/>
+  <text x="345" y="148" text-anchor="middle" class="title">YouTube Transcript API</text>
+  <text x="345" y="170" text-anchor="middle" class="sub">Fetch captions + timestamps</text>
+  <text x="345" y="184" text-anchor="middle" class="sub">auto-detect language</text>
+
+  <!-- Local cache -->
+  <rect x="490" y="120" width="180" height="70" class="box" fill="#f1f5f9" stroke="#64748b"/>
+  <text x="580" y="148" text-anchor="middle" class="title">Local Cache</text>
+  <text x="580" y="170" text-anchor="middle" class="sub">.clipsage_cache/transcripts</text>
+  <text x="580" y="184" text-anchor="middle" class="sub">JSON per video_id</text>
+
+  <!-- Chunker -->
+  <rect x="720" y="120" width="190" height="70" class="box" fill="#fff7ed" stroke="#f97316"/>
+  <text x="815" y="148" text-anchor="middle" class="title">Text Splitter</text>
+  <text x="815" y="170" text-anchor="middle" class="sub">RecursiveCharacterSplitter</text>
+  <text x="815" y="184" text-anchor="middle" class="sub">10k chars · 1k overlap</text>
+
+  <!-- arrows ingest -->
+  <path d="M200,155 L250,155" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M440,155 L490,155" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M670,155 L720,155" class="arrow" marker-end="url(#arrow)"/>
+
+  <!-- ============ TWO PATHS ============ -->
+  <text x="60" y="240" class="section">2 · TWO PARALLEL PATHS</text>
+
+  <!-- Path A: Direct generation -->
+  <rect x="40" y="260" width="500" height="180" rx="14" fill="#ecfdf5" stroke="#10b981" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="60" y="284" font-size="13" font-weight="700" fill="#065f46">A · Direct LLM Generation</text>
+  <text x="60" y="302" class="sub">For Notes · Quiz · Blog · LinkedIn · Mind Map · Sentiment…</text>
+
+  <rect x="60" y="320" width="200" height="60" class="box" fill="#ffffff" stroke="#10b981"/>
+  <text x="160" y="346" text-anchor="middle" class="title">Full transcript</text>
+  <text x="160" y="366" text-anchor="middle" class="sub">+ task-specific prompt</text>
+
+  <path d="M260,350 L320,350" class="arrow" marker-end="url(#arrow)"/>
+
+  <rect x="320" y="320" width="200" height="60" class="box" fill="#ffffff" stroke="#10b981"/>
+  <text x="420" y="346" text-anchor="middle" class="title">Gemini 2.5 Flash</text>
+  <text x="420" y="366" text-anchor="middle" class="sub">ChatGoogleGenerativeAI</text>
+
+  <text x="290" y="410" text-anchor="middle" class="label">→ Markdown output → exported as MD / DOCX / PDF</text>
+
+  <!-- Path B: RAG -->
+  <rect x="560" y="260" width="580" height="320" rx="14" fill="#eff6ff" stroke="#3b82f6" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="580" y="284" font-size="13" font-weight="700" fill="#1e40af">B · RAG Pipeline (Chat with Video)</text>
+  <text x="580" y="302" class="sub">Query → Embed → ChromaDB → Gemini → Response</text>
+
+  <!-- Query -->
+  <rect x="580" y="320" width="120" height="60" class="box" fill="#ffffff" stroke="#3b82f6"/>
+  <text x="640" y="346" text-anchor="middle" class="title">Query</text>
+  <text x="640" y="366" text-anchor="middle" class="sub">user question</text>
+
+  <!-- Embed -->
+  <rect x="720" y="320" width="130" height="60" class="box" fill="#ffffff" stroke="#3b82f6"/>
+  <text x="785" y="344" text-anchor="middle" class="title">Embed</text>
+  <text x="785" y="362" text-anchor="middle" class="sub">embedding-001</text>
+  <text x="785" y="376" text-anchor="middle" class="sub">(Google)</text>
+
+  <!-- ChromaDB -->
+  <rect x="870" y="320" width="130" height="60" class="box" fill="#ffffff" stroke="#3b82f6"/>
+  <text x="935" y="344" text-anchor="middle" class="title">ChromaDB</text>
+  <text x="935" y="362" text-anchor="middle" class="sub">similarity_search</text>
+  <text x="935" y="376" text-anchor="middle" class="sub">top-k = 4</text>
+
+  <!-- Gemini -->
+  <rect x="1020" y="320" width="110" height="60" class="box" fill="#ffffff" stroke="#3b82f6"/>
+  <text x="1075" y="344" text-anchor="middle" class="title">Gemini</text>
+  <text x="1075" y="362" text-anchor="middle" class="sub">2.5 Flash</text>
+  <text x="1075" y="376" text-anchor="middle" class="sub">+ context</text>
+
+  <path d="M700,350 L720,350" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M850,350 L870,350" class="arrow" marker-end="url(#arrow)"/>
+  <path d="M1000,350 L1020,350" class="arrow" marker-end="url(#arrow)"/>
+
+  <!-- Persistent vector store -->
+  <rect x="720" y="430" width="280" height="70" class="box" fill="#f1f5f9" stroke="#64748b"/>
+  <text x="860" y="456" text-anchor="middle" class="title">Persistent Vector Store</text>
+  <text x="860" y="476" text-anchor="middle" class="sub">.clipsage_cache/vectors/{video_id}</text>
+  <text x="860" y="490" text-anchor="middle" class="sub">reused on re-runs (smart caching)</text>
+
+  <path d="M935,430 L935,380" class="arrow" marker-end="url(#arrow)"/>
+  <text x="950" y="412" class="label">retrieve</text>
+
+  <!-- Response -->
+  <rect x="580" y="510" width="560" height="55" class="box" fill="#ffffff" stroke="#3b82f6"/>
+  <text x="860" y="534" text-anchor="middle" class="title">Grounded Response</text>
+  <text x="860" y="552" text-anchor="middle" class="sub">"Answer ONLY from context" — refuses to hallucinate</text>
+
+  <path d="M1075,380 L1075,510" class="arrow" marker-end="url(#arrow)"/>
+
+  <!-- Chunks → embed (from top) -->
+  <path d="M815,190 C815,230 785,270 785,320" class="arrow" marker-end="url(#arrow)"/>
+  <text x="700" y="240" class="label">chunks (one-time)</text>
+
+  <!-- Full transcript path from cache -->
+  <path d="M580,190 C580,220 160,230 160,320" class="arrow" marker-end="url(#arrow)"/>
+
+  <!-- Footer note -->
+  <text x="590" y="615" text-anchor="middle" class="sub">Streamlit UI · LangChain orchestration · python-docx / fpdf2 / PyVis for exports</text>
+</svg>
