@@ -1,14 +1,28 @@
 # ClipSage 🎬
 
-**AI-powered YouTube content synthesizer.**
+> **One YouTube link in. Notes, quizzes, blog posts, a mind map, and a grounded RAG chatbot out.**
+
+[![Python](https://img.shields.io/badge/Python-3.9+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.x-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
+[![LangChain](https://img.shields.io/badge/LangChain-0.3-1C3C3C?logo=langchain&logoColor=white)](https://www.langchain.com/)
+[![Gemini](https://img.shields.io/badge/Gemini_2.5_Flash-4285F4?logo=google&logoColor=white)](https://ai.google.dev/)
+[![ChromaDB](https://img.shields.io/badge/ChromaDB-vector_store-FF6B6B)](https://www.trychroma.com/)
 
 ![ClipSage screenshot](image.png)
 
-Turn any YouTube video into notes, quizzes, blog posts, mind maps, and a chatbot — in one click.
+ClipSage is an end-to-end LLM application that turns any YouTube video into **nine different content formats** — study notes with clickable timestamps, quizzes, flashcards, blog posts, LinkedIn updates, Twitter threads, sentiment analysis, key quotes, an interactive mind map, and a **retrieval-grounded chatbot** that refuses to hallucinate.
 
-ClipSage watches a YouTube video *for you*, reads the transcript, and gives you back exactly the format you need: study notes, a quick recap, a quiz to test yourself, a polished blog post, a LinkedIn update, a Twitter thread, a visual mind map, or even a chatbot you can ask questions to.
+Built to demonstrate production-grade LLM engineering: a real RAG pipeline (Google embeddings → Chroma → Gemini), two-layer caching (transcript + persistent vector store), prompt templates for nine distinct tasks, multi-format export (Markdown / DOCX / PDF), auto language detection and translation, and a clean Streamlit UI — all in ~500 lines of Python.
 
-No video editing skills, no coding knowledge, no manual note-taking required.
+### TL;DR for reviewers
+- 🧠 **RAG done right** — `Query → embedding-001 → Chroma (top-k=4) → Gemini 2.5 Flash` with a strict *"answer only from context"* prompt. Vector stores persist per `video_id`, so re-runs skip re-embedding.
+- ⚡ **Two-layer caching** — raw transcript JSON + ChromaDB on disk. Repeat queries are free; quota stays small.
+- 🧩 **Nine prompt-driven generators** sharing one ingestion pipeline — adding a new output format is one function, not new infra.
+- 🌍 **Multilingual** — auto-detects the video's language and translates output to any target.
+- 📤 **Real exports** — markdown, `python-docx`, and `fpdf2` so users can actually ship the output.
+- 🕸 **Interactive mind map** rendered via PyVis from a structured JSON the LLM emits.
+
+👉 **[How it works (architecture + design tradeoffs)](#-how-it-works)** · **[Tech stack](#-whats-under-the-hood-for-the-curious)** · **[Run it locally in 5 steps](#-how-to-set-it-up-step-by-step)**
 
 ---
 
@@ -34,6 +48,39 @@ Pick any of these from a simple sidebar menu:
 - 📏 **Pick your notes length** — Short, Medium, or Detailed
 - ⬇️ **Download anything** as Markdown, Word (.docx), or PDF
 - ⚡ **Smart caching** — process the same video twice and it loads instantly
+
+---
+
+## 🧠 How it works
+
+![ClipSage architecture](assets/architecture.svg)
+
+ClipSage runs **two parallel paths** off a single ingested transcript:
+
+**Ingest (shared)**
+1. User pastes a YouTube URL into the Streamlit UI.
+2. `YouTubeTranscriptApi` fetches captions + timestamps (auto-detects language).
+3. Transcript is cached locally as JSON keyed by `video_id` — re-runs are instant.
+4. `RecursiveCharacterTextSplitter` chunks the transcript (10k chars, 1k overlap) for the RAG path.
+
+**Path A — Direct LLM generation** (notes, quiz, blog, LinkedIn, Twitter, mind map, sentiment, quotes)
+- The full timestamped transcript + a task-specific prompt template is sent to **Gemini 2.5 Flash** via `ChatGoogleGenerativeAI`.
+- Output is markdown; exported on demand as MD / DOCX / PDF (`python-docx`, `fpdf2`).
+
+**Path B — RAG pipeline** (Chat with Video)
+
+```
+Query → Embed (Google embedding-001) → ChromaDB similarity_search (top-k=4) → Gemini 2.5 Flash + context → Grounded response
+```
+
+- Chunks are embedded **once per video** with `GoogleGenerativeAIEmbeddings` (`models/embedding-001`) and persisted to `.clipsage_cache/vectors/{video_id}` via `langchain_chroma.Chroma`.
+- On each user question, Chroma retrieves the top-4 most similar chunks. The retrieved context is stuffed into a prompt that instructs Gemini to answer **only from context** — this is what prevents hallucination and lets the bot honestly say "I don't know" when the video doesn't cover a topic.
+- The persistent store means the second question on the same video skips re-embedding entirely.
+
+**Why this design**
+- **Caching at two layers** (raw transcript JSON + Chroma vector store) makes repeat use feel instant and stays within Gemini's free-tier quota.
+- **Single shared ingest, multiple downstream tasks** — adding a new format (e.g. "executive summary") is just another prompt template, not new infrastructure.
+- **Strict grounding in the RAG prompt** keeps the chat trustworthy on lecture / interview content where invented facts would be harmful.
 
 ---
 
